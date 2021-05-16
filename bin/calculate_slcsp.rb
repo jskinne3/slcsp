@@ -1,3 +1,9 @@
+# Usage:
+# ruby bin/calculate_slcsp.rb
+
+# Or, with all three command line arguments:
+# ruby bin/calculate_slcsp.rb data/slcsp.csv data/plans.csv data/zips.csv
+
 require 'csv'
 
 def rate_areas_for_zip(zip:, zips:)
@@ -40,6 +46,9 @@ def benchmark_rate_in_area(rate_area:, plans:)
 end
 
 def get_inputs(input_file:, plans_file:, zips_file:)
+  raise "Input file not found: #{input_file}" unless File.file?(input_file)
+  raise "Plans file not found: #{plans_file}" unless File.file?(plans_file)
+  raise  "Zips file not found: #{zips_file}"  unless File.file?(zips_file)
   input = CSV.read(input_file, headers: true)
   plans = CSV.read(plans_file, headers: true)
   zips  = CSV.read(zips_file,  headers: true)
@@ -48,16 +57,23 @@ end
 
 def calcualte_slcsp_rates_from_table(input:, plans:, zips:)
   # Iterate over input zips. Output benchmark rate for each zip, or if the
-  # number of rates (or rate areas) is higher or lower than 1, print blank.
+  # number of rates (or rate areas) is higher or lower than 1, output nil.
+  output = []
   for item in input
     rate_areas = rate_areas_for_zip(zip:item['zipcode'], zips: zips)
     if rate_areas.length == 1
-      rate = benchmark_rate_in_area(rate_area: rate_areas[0], plans: plans)
-      puts "#{item.to_s.strip}#{rate}"
+      output << benchmark_rate_in_area(rate_area: rate_areas[0], plans: plans)
     else
-      puts item.to_s.strip
+      output << nil
     end
   end
+  return output
+end
+
+def print_collated_output(input:, output:)
+  # Add calculated rates onto input csv and print the result
+  output.each_with_index {|v,i| input[i]['rate'] = v }
+  puts input.to_csv
 end
 
 # Run if file is invoked from command line, guard from tests
@@ -78,11 +94,14 @@ if $0 == __FILE__
   # Subset all plans to only Silver plans
   plans = plans_by_metal_level(metal: "Silver", plans: plans)
 
-  # Calculate the SLCSP for all input file zips and print
+  # Calculate the SLCSP for all input file zips
   output = calcualte_slcsp_rates_from_table(
     input: input,
     plans: plans,
     zips:  zips
   )
+
+  # Print input file augmented with SLCSP rates to terminal
+  print_collated_output(input: input, output: output)
 
 end

@@ -82,5 +82,31 @@ describe '#nth_lowest_rate' do
   it 'should should return nil when n is larger than rates length' do
     expect(nth_lowest_rate(n: 2, rates: [5])).to eq nil
   end
+
+  describe '#benchmark_rate_in_area' do
+  plans = [
+    {'state' => 'AK', 'rate_area' => 1, 'rate' => 10.0},
+    {'state' => 'AL', 'rate_area' => 1, 'rate' => 20.0},
+    {'state' => 'AL', 'rate_area' => 1, 'rate' => 25.0},
+    {'state' => 'AR', 'rate_area' => 1, 'rate' => 30.0},
+    {'state' => 'AR', 'rate_area' => 1, 'rate' => 35.0},
+    {'state' => 'AR', 'rate_area' => 2, 'rate' => 40.0},
+    {'state' => 'AR', 'rate_area' => 2, 'rate' => 40.0}
+  ]
+    it 'find 2nd lowest rate distinguished by state' do
+      expect(benchmark_rate_in_area(rate_area: ['AL', 1], plans: plans)).to eq "25.00"
+    end
+    it 'find 2nd lowest rate distinguished by number' do
+      expect(benchmark_rate_in_area(rate_area: ['AR', 1], plans: plans)).to eq "35.00"
+    end
+    it 'return nil when only one rate in area' do
+      expect(benchmark_rate_in_area(rate_area: ['AK', 1], plans: plans)).to eq nil
+    end
+    it 'handle identical plans' do
+      expect(benchmark_rate_in_area(rate_area: ['AR', 2], plans: plans)).to eq nil
+    end
+  end
+
+  # TODO: add tests for remaining methods in calculate_slcsp.rb
  
 end
